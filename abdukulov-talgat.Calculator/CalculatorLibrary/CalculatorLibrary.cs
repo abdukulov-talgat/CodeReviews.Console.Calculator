@@ -1,74 +1,66 @@
 ﻿namespace CalculatorLibrary;
 
-// CalculatorLibrary.cs
 using Newtonsoft.Json;
 
 public class Calculator
 {
-    JsonWriter writer;
+    private readonly JsonWriter _writer;
 
     public Calculator()
     {
-        StreamWriter logFile = File.CreateText("calculatorlog.json");
+        StreamWriter logFile = File.CreateText("calculator-log.json");
         logFile.AutoFlush = true;
-        writer = new JsonTextWriter(logFile);
-        writer.Formatting = Formatting.Indented;
-        writer.WriteStartObject();
-        writer.WritePropertyName("Operations");
-        writer.WriteStartArray();
+        _writer = new JsonTextWriter(logFile);
+        _writer.Formatting = Formatting.Indented;
+        _writer.WriteStartObject();
+        _writer.WritePropertyName("Operations");
+        _writer.WriteStartArray();
     }
 
     public double DoOperation(double num1, double num2, string op)
     {
-        double
-            result = double
-                .NaN; // Default value is "not-a-number" if an operation, such as division, could result in an error.
-        writer.WriteStartObject();
-        writer.WritePropertyName("Operand1");
-        writer.WriteValue(num1);
-        writer.WritePropertyName("Operand2");
-        writer.WriteValue(num2);
-        writer.WritePropertyName("Operation");
-        // Use a switch statement to do the math.
+        _writer.WriteStartObject();
+        _writer.WritePropertyName("Operand1");
+        _writer.WriteValue(num1);
+        _writer.WritePropertyName("Operand2");
+        _writer.WriteValue(num2);
+        _writer.WritePropertyName("Operation");
+        double result;
+
         switch (op)
         {
             case "a":
                 result = num1 + num2;
-                writer.WriteValue("Add");
+                _writer.WriteValue("Add");
                 break;
             case "s":
                 result = num1 - num2;
-                writer.WriteValue("Subtract");
+                _writer.WriteValue("Subtract");
                 break;
             case "m":
                 result = num1 * num2;
-                writer.WriteValue("Multiply");
+                _writer.WriteValue("Multiply");
                 break;
             case "d":
-                // Ask the user to enter a non-zero divisor.
-                if (num2 != 0)
-                {
-                    result = num1 / num2;
-                }
-
-                writer.WriteValue("Divide");
+                result = num2 != 0 ? num1 / num2 : double.NaN;
+                _writer.WriteValue("Divide");
                 break;
-            // Return text for an incorrect option entry.
             default:
+                result = double.NaN;
                 break;
         }
 
-        writer.WritePropertyName("Result");
-        writer.WriteValue(result);
-        writer.WriteEndObject();
+        _writer.WritePropertyName("Result");
+        _writer.WriteValue(result);
+        _writer.WriteEndObject();
 
         return result;
     }
 
     public void Finish()
     {
-        writer.WriteEndArray();
-        writer.WriteEndObject();
-        writer.Close();
+        _writer.WriteEndArray();
+        _writer.WriteEndObject();
+        _writer.Close();
     }
 }
