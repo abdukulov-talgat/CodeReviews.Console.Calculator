@@ -2,8 +2,9 @@
 
 using Newtonsoft.Json;
 
-public class Calculator
+public class Calculator : IDisposable
 {
+    private bool _disposed;
     private readonly JsonWriter _writer;
 
     public Calculator()
@@ -17,7 +18,7 @@ public class Calculator
         _writer.WriteStartArray();
     }
 
-    public double DoOperation(double num1, double num2, string op)
+    public double Calculate(double num1, double num2, string op)
     {
         _writer.WriteStartObject();
         _writer.WritePropertyName("Operand1");
@@ -57,10 +58,21 @@ public class Calculator
         return result;
     }
 
-    public void Finish()
+    public void Dispose()
     {
-        _writer.WriteEndArray();
-        _writer.WriteEndObject();
-        _writer.Close();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+
+        if (disposing)
+        {
+            ((IDisposable)_writer)?.Dispose();
+        }
+
+        _disposed = true;
     }
 }
