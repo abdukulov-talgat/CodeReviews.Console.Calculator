@@ -39,6 +39,10 @@ public class Calculator
             OperationType.Subtract => left - right,
             OperationType.Multiply => left * right,
             OperationType.Division => right != 0 ? left / right : double.NaN,
+            OperationType.Pow => Math.Pow(left, right),
+            OperationType.Sqrt => Math.Sqrt(left),
+            OperationType.Cos => Math.Cos(left),
+            OperationType.Sin => Math.Sin(left),
             _ => throw new ArgumentOutOfRangeException(nameof(operationType), operationType, null)
         };
 

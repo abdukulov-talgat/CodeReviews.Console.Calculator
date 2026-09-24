@@ -35,6 +35,34 @@ namespace CalculatorApp
             }
         }
 
+
+        private static void DoCalculations(Calculator calculator)
+        {
+            bool shouldCalculate = true;
+            while (shouldCalculate)
+            {
+                OperationType operationType = AnsiConsole.Prompt(new SelectionPrompt<OperationType>()
+                    .Title("Choose an operator:")
+                    .AddChoices(Enum.GetValues<OperationType>()));
+                double left = AnsiConsole.Ask<double>("Type a number, and then press Enter: ");
+                double right = IsUnaryOperation(operationType)
+                    ? double.NaN //right is not used for unary operations. For simplicity there is no inheritance to solve this.  
+                    : AnsiConsole.Ask<double>("Type another number, and then press Enter: ");
+
+
+                Operation op = calculator.Calculate(left, right, operationType);
+                AnsiConsole.MarkupLine($"[yellow]{op}[/]");
+
+                shouldCalculate = AnsiConsole.Confirm("Calculate again?", true);
+                AnsiConsole.Clear();
+            }
+        }
+
+        private static bool IsUnaryOperation(OperationType operationType)
+        {
+            return operationType is OperationType.Sqrt or OperationType.Cos or OperationType.Sin;
+        }
+
         private static void DisplayHistory(Calculator calculator)
         {
             AnsiConsole.Clear();
@@ -63,31 +91,6 @@ namespace CalculatorApp
             {
                 calculator.ClearHistory();
             }
-        }
-
-        private static void DoCalculations(Calculator calculator)
-        {
-            bool shouldCalculate = true;
-            while (shouldCalculate)
-            {
-                double left = AnsiConsole.Ask<double>("Type a number, and then press Enter: ");
-                double right = AnsiConsole.Ask<double>("Type another number, and then press Enter: ");
-                OperationType operationType = AnsiConsole.Prompt(new SelectionPrompt<OperationType>()
-                    .Title("Choose an operator:")
-                    .AddChoices(Enum.GetValues<OperationType>()));
-
-                Operation op = calculator.Calculate(left, right, operationType);
-                AnsiConsole.MarkupLine($"[yellow]{op}[/]");
-
-                shouldCalculate = AnsiConsole.Confirm("Calculate again?", true);
-                AnsiConsole.Clear();
-            }
-        }
-
-        private static void WaitForUserInput()
-        {
-            AnsiConsole.WriteLine("Press any key to continue...");
-            Console.ReadKey();
         }
     }
 }

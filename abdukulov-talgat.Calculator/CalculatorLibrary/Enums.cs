@@ -6,6 +6,10 @@ public enum OperationType
     Subtract,
     Multiply,
     Division,
+    Pow,
+    Sqrt,
+    Cos,
+    Sin,
 }
 
 public enum MainMenu
