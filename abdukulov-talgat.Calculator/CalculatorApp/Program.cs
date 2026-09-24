@@ -1,6 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
-using CalculatorLibrary;
+﻿using CalculatorLibrary;
+using Spectre.Console;
+
 
 namespace CalculatorApp
 {
@@ -8,75 +8,86 @@ namespace CalculatorApp
     {
         private static void Main(string[] args)
         {
-            using Calculator calculator = new Calculator();
+            Calculator calculator = new Calculator();
             bool endApp = false;
-
-            Console.WriteLine("Console Calculator in C#\r");
-            Console.WriteLine("------------------------\n");
-
 
             while (!endApp)
             {
-                double left = RequestNumber("Type a number, and then press Enter: ");
-                double right = RequestNumber("Type another number, and then press Enter: ");
+                AnsiConsole.Clear();
+                MainMenu mainMenuChoice = AnsiConsole.Prompt(new SelectionPrompt<MainMenu>()
+                    .Title("Main Menu")
+                    .AddChoices(Enum.GetValues<MainMenu>()));
 
-                string? op = RequestOperatorInput();
-
-                if (!IsOperatorValid(op))
+                switch (mainMenuChoice)
                 {
-                    Console.WriteLine("Error: Unrecognized input.");
+                    case MainMenu.Calculate:
+                        DoCalculations(calculator);
+                        break;
+                    case MainMenu.History:
+                        DisplayHistory(calculator);
+                        break;
+                    case MainMenu.Exit:
+                        endApp = true;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
-                else
-                {
-                    double result = calculator.Calculate(left, right, op);
-                    if (double.IsNaN(result))
-                        Console.WriteLine("This operation will result in a mathematical error.\n");
-                    else
-                        Console.WriteLine("Your result: {0:0.##}\n", result);
-                }
-
-                Console.WriteLine("------------------------\n");
-
-                Console.Write("Press 'n' and Enter to close the app, or press any other key and Enter to continue: ");
-                if (Console.ReadLine() == "n") endApp = true;
-                Console.Clear();
             }
         }
 
-        private static double RequestNumber(string prompt,
-            string errorMessage = "This is not valid input. Please enter an integer value: ")
+        private static void DisplayHistory(Calculator calculator)
         {
-            string? input = "";
-            Console.Write(prompt);
-            input = Console.ReadLine();
+            AnsiConsole.Clear();
+            List<string> choices = [];
 
-            double num = 0;
-            while (!double.TryParse(input, out num))
+            if (calculator.Operations.Count > 0)
             {
-                Console.Write(errorMessage);
-                input = Console.ReadLine();
+                choices.Add("Clear History");
+                AnsiConsole.MarkupLine($"Previous operations\n");
+                foreach (Operation operation in calculator.Operations)
+                {
+                    AnsiConsole.MarkupLine($"[yellow]{operation}[/]");
+                }
+
+                AnsiConsole.MarkupLine($"\nTotal Count: {calculator.Operations.Count}\n");
+            }
+            else
+            {
+                AnsiConsole.MarkupLine($"There is no previous operations\n");
             }
 
-            return num;
+            choices.Add("Main Menu");
+            string prompt = AnsiConsole.Prompt(new SelectionPrompt<string>()
+                .AddChoices(choices));
+            if (prompt == "Clear History")
+            {
+                calculator.ClearHistory();
+            }
         }
 
-        private static string? RequestOperatorInput()
+        private static void DoCalculations(Calculator calculator)
         {
-            Console.WriteLine("Choose an operator from the following list:");
-            Console.WriteLine("\ta - Add");
-            Console.WriteLine("\ts - Subtract");
-            Console.WriteLine("\tm - Multiply");
-            Console.WriteLine("\td - Divide");
-            Console.Write("Your option? ");
+            bool shouldCalculate = true;
+            while (shouldCalculate)
+            {
+                double left = AnsiConsole.Ask<double>("Type a number, and then press Enter: ");
+                double right = AnsiConsole.Ask<double>("Type another number, and then press Enter: ");
+                OperationType operationType = AnsiConsole.Prompt(new SelectionPrompt<OperationType>()
+                    .Title("Choose an operator:")
+                    .AddChoices(Enum.GetValues<OperationType>()));
 
-            string? op = Console.ReadLine();
-            return op;
+                Operation op = calculator.Calculate(left, right, operationType);
+                AnsiConsole.MarkupLine($"[yellow]{op}[/]");
+
+                shouldCalculate = AnsiConsole.Confirm("Calculate again?", true);
+                AnsiConsole.Clear();
+            }
         }
 
-
-        private static bool IsOperatorValid([NotNullWhen(true)] string? op)
+        private static void WaitForUserInput()
         {
-            return op != null && Regex.IsMatch(op, "[a|s|m|d]");
+            AnsiConsole.WriteLine("Press any key to continue...");
+            Console.ReadKey();
         }
     }
 }
