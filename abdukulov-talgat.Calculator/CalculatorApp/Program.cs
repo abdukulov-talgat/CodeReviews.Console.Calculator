@@ -1,4 +1,5 @@
-﻿using CalculatorLibrary;
+﻿using System.Text.RegularExpressions;
+using CalculatorLibrary;
 using Spectre.Console;
 
 
@@ -6,9 +7,10 @@ namespace CalculatorApp
 {
     public static class Program
     {
+        private static readonly Calculator Calculator = new();
+
         private static void Main(string[] args)
         {
-            Calculator calculator = new Calculator();
             bool endApp = false;
 
             while (!endApp)
@@ -21,10 +23,10 @@ namespace CalculatorApp
                 switch (mainMenuChoice)
                 {
                     case MainMenu.Calculate:
-                        DoCalculations(calculator);
+                        DoCalculations();
                         break;
                     case MainMenu.History:
-                        DisplayHistory(calculator);
+                        DisplayHistory();
                         break;
                     case MainMenu.Exit:
                         endApp = true;
@@ -36,7 +38,7 @@ namespace CalculatorApp
         }
 
 
-        private static void DoCalculations(Calculator calculator)
+        private static void DoCalculations()
         {
             bool shouldCalculate = true;
             while (shouldCalculate)
@@ -44,13 +46,13 @@ namespace CalculatorApp
                 OperationType operationType = AnsiConsole.Prompt(new SelectionPrompt<OperationType>()
                     .Title("Choose an operator:")
                     .AddChoices(Enum.GetValues<OperationType>()));
-                double left = AnsiConsole.Ask<double>("Type a number, and then press Enter: ");
+                double left = RequestNumberInput("Type a number or 'p' to chose from previous results: ");
                 double right = IsUnaryOperation(operationType)
                     ? double.NaN //right is not used for unary operations. For simplicity there is no inheritance to solve this.  
-                    : AnsiConsole.Ask<double>("Type another number, and then press Enter: ");
+                    : RequestNumberInput("And again type a number or 'p' to chose from previous results: ");
 
 
-                Operation op = calculator.Calculate(left, right, operationType);
+                Operation op = Calculator.Calculate(left, right, operationType);
                 AnsiConsole.MarkupLine($"[yellow]{op}[/]");
 
                 shouldCalculate = AnsiConsole.Confirm("Calculate again?", true);
@@ -58,26 +60,44 @@ namespace CalculatorApp
             }
         }
 
+        private static double RequestNumberInput(string message)
+        {
+            TextPrompt<string> textPrompt = new(message);
+
+            string input = AnsiConsole.Prompt(textPrompt.Validate(
+                str => Regex.IsMatch(str, "^p$|\\d+"),
+                "Wrong input. Only numbers and 'p' is allowed"));
+
+            return input == "p"
+                ? AnsiConsole.Prompt(
+                    new SelectionPrompt<Operation>()
+                        .AddChoices(Calculator.Operations)).Result
+                : double.Parse(input);
+        }
+
+        //For simplicity, I didn't use polymorphism
         private static bool IsUnaryOperation(OperationType operationType)
         {
             return operationType is OperationType.Sqrt or OperationType.Cos or OperationType.Sin;
         }
 
-        private static void DisplayHistory(Calculator calculator)
+
+        //History menu view
+        private static void DisplayHistory()
         {
             AnsiConsole.Clear();
             List<string> choices = [];
 
-            if (calculator.Operations.Count > 0)
+            if (Calculator.Operations.Count > 0)
             {
                 choices.Add("Clear History");
                 AnsiConsole.MarkupLine($"Previous operations\n");
-                foreach (Operation operation in calculator.Operations)
+                foreach (Operation operation in Calculator.Operations)
                 {
                     AnsiConsole.MarkupLine($"[yellow]{operation}[/]");
                 }
 
-                AnsiConsole.MarkupLine($"\nTotal Count: {calculator.Operations.Count}\n");
+                AnsiConsole.MarkupLine($"\nTotal Count: {Calculator.Operations.Count}\n");
             }
             else
             {
@@ -89,7 +109,7 @@ namespace CalculatorApp
                 .AddChoices(choices));
             if (prompt == "Clear History")
             {
-                calculator.ClearHistory();
+                Calculator.ClearHistory();
             }
         }
     }
