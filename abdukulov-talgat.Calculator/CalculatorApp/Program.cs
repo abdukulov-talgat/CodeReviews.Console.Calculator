@@ -65,7 +65,7 @@ namespace CalculatorApp
             TextPrompt<string> textPrompt = new(message);
 
             string input = AnsiConsole.Prompt(textPrompt.Validate(
-                str => Regex.IsMatch(str, "^p$|\\d+"),
+                str => str == "p" || double.TryParse(str, out _),
                 "Wrong input. Only numbers and 'p' is allowed"));
 
             return input == "p"
