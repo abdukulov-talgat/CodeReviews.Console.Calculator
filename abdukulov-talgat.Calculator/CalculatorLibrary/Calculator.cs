@@ -27,7 +27,7 @@ public class Calculator
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"An exception occurs during loading: {ex.Message}");
+            DisplayErrorMessage(ex);
         }
     }
 
@@ -60,6 +60,18 @@ public class Calculator
 
     private void Save()
     {
-        File.WriteAllText(LogFileName, JsonConvert.SerializeObject(_operations, Formatting.Indented));
+        try
+        {
+            File.WriteAllText(LogFileName, JsonConvert.SerializeObject(_operations, Formatting.Indented));
+        }
+        catch (Exception ex)
+        {
+            DisplayErrorMessage(ex);
+        }
+    }
+
+    private static void DisplayErrorMessage(Exception ex)
+    {
+        Console.WriteLine($"An exception occurs during loading: {ex.Message}");
     }
 }
